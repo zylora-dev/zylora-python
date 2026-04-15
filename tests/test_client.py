@@ -76,7 +76,18 @@ def test_invoke_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ZYLORA_API_URL", "https://mock.api")
 
     respx.post("https://mock.api/v1/functions/embed/invoke").mock(
-        return_value=httpx.Response(200, json={"embedding": [0.1, 0.2, 0.3]}),
+        return_value=httpx.Response(
+            200,
+            json={
+                "invocation_id": "019d0000-0000-7000-0000-000000000001",
+                "status": "completed",
+                "output": {"embedding": [0.1, 0.2, 0.3]},
+                "duration_ms": 42,
+                "cost_cents": 1,
+                "gpu_type": "h100",
+                "cold_start": False,
+            },
+        ),
     )
 
     zy = Zylora(api_key="zy_test_key", api_url="https://mock.api")

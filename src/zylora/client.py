@@ -117,7 +117,7 @@ class Zylora:
             f"/v1/functions/{function}/invoke",
             json=payload,
         )
-        return deserialize_output(resp.json())
+        return deserialize_output(resp.json()["output"])
 
     def batch(
         self,
@@ -199,7 +199,7 @@ class Zylora:
             f"/v1/functions/{function}/invoke",
             json=payload,
         )
-        return deserialize_output(resp.json())
+        return deserialize_output(resp.json()["output"])
 
     async def abatch(
         self,
@@ -354,7 +354,7 @@ class AsyncJob:
         while time.monotonic() < deadline:
             job = self._client.get_job_result(self.function, self.job_id)
             if job.status == InvocationStatus.COMPLETED:
-                return deserialize_output(job.result)
+                return deserialize_output(job.output)
             if job.status in (
                 InvocationStatus.FAILED,
                 InvocationStatus.TIMEOUT,
@@ -373,7 +373,7 @@ class AsyncJob:
         while time.monotonic() < deadline:
             job = await self._client.aget_job_result(self.function, self.job_id)
             if job.status == InvocationStatus.COMPLETED:
-                return deserialize_output(job.result)
+                return deserialize_output(job.output)
             if job.status in (
                 InvocationStatus.FAILED,
                 InvocationStatus.TIMEOUT,

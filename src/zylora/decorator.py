@@ -116,7 +116,7 @@ class ZyloraFunction:
             self.function_name, payloads, concurrency=concurrency
         )
 
-    async def astream(self, *args: Any, **kwargs: Any) -> AsyncIterator[str]:
+    def astream(self, *args: Any, **kwargs: Any) -> AsyncIterator[str]:
         """Async version of :meth:`stream`."""
         payload = _build_payload(args, kwargs)
         return self._get_client().astream(self.function_name, payload)

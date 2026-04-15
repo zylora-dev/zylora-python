@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class GpuType(str, enum.Enum):
@@ -88,7 +88,7 @@ class AsyncJobResponse(BaseModel):
 
     job_id: str
     status: InvocationStatus
-    created_at: datetime
+    created_at: datetime | None = None
 
 
 class AsyncJobResult(BaseModel):
@@ -96,11 +96,11 @@ class AsyncJobResult(BaseModel):
 
     job_id: str
     status: InvocationStatus
-    result: object | None = None
+    output: object | None = None
     error: ErrorDetail | None = None
     duration_ms: int | None = None
     cost_cents: int | None = None
-    created_at: datetime
+    created_at: datetime | None = None
     completed_at: datetime | None = None
 
 
@@ -109,17 +109,31 @@ class BatchResultItem(BaseModel):
 
     index: int
     status: InvocationStatus
-    result: object | None = None
+    output: object | None = None
     error: str | None = None
+    duration_ms: int | None = None
+    cost_cents: int | None = None
 
 
 class BatchResponse(BaseModel):
     """Returned by POST /v1/functions/{id}/map."""
 
     results: list[BatchResultItem]
-    total: int
-    succeeded: int
-    failed: int
+    total_cost_cents: int = 0
+    # Computed from results when not supplied by the server.
+    total: int = 0
+    succeeded: int = 0
+    failed: int = 0
+
+    @model_validator(mode="after")
+    def _compute_stats(self) -> "BatchResponse":
+        if not self.total and self.results:
+            self.total = len(self.results)
+            self.succeeded = sum(
+                1 for r in self.results if r.status == InvocationStatus.COMPLETED
+            )
+            self.failed = self.total - self.succeeded
+        return self
 
 
 class FunctionInfo(BaseModel):
